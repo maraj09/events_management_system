@@ -1,0 +1,120 @@
+<?php
+
+require_once '../database/database.php';
+require_once '../inc/session.php';
+
+class Authentication
+{
+  private $db;
+
+  public function __construct()
+  {
+    $this->db = new Database();
+  }
+
+  public function emailExists($email)
+  {
+    $query = "SELECT COUNT(*) FROM users WHERE email = ?";
+    $stmt = $this->db->query($query, [$email]);
+    return $stmt->fetchColumn() > 0; // Return true if email exists
+  }
+
+  public function login($data)
+  {
+    $errors = [];
+
+    if (empty($data['email'])) {
+      $errors['email'] = "Email is required.";
+    } elseif (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+      $errors['email'] = "Invalid email format.";
+    }
+
+    if (empty($data['password'])) {
+      $errors['password'] = "Password is required.";
+    }
+
+    if (!empty($errors)) {
+      Session::start();
+      $_SESSION['errors'] = $errors;
+      header("Location: ../login.php");
+      exit;
+    }
+
+    $query = "SELECT id, name, email, password FROM users WHERE email = ?";
+    $result = $this->db->query($query, [$data['email']]);
+    $user = $result->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user || !password_verify($data['password'], $user['password'])) {
+      Session::start();
+      $_SESSION['errors'] = ['email' => "Invalid email or password."];
+      header("Location: ../login.php");
+      exit;
+    }
+
+    Session::set("login", true);
+    Session::set("user_id", $user['id']);
+    Session::set("user_name", $user['name']);
+    Session::set("user_email", $user['email']);
+
+    header("Location: ../index.php");
+    exit;
+  }
+
+  public function register($data)
+  {
+    $errors = [];
+
+    if (empty($data['name'])) {
+      $errors['name'] = "Name is required.";
+    }
+
+    if (empty($data['email'])) {
+      $errors['email'] = "Email is required.";
+    } elseif (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+      $errors['email'] = "Invalid email format.";
+    } elseif ($this->emailExists($data['email'])) {
+      $errors['email'] = "Email is already in use.";
+    }
+
+    if (empty($data['password'])) {
+      $errors['password'] = "Password is required.";
+    }
+
+    if (strlen($data['password']) < 8) {
+      $errors['password'] = "Password must be at least 8 characters.";
+    }
+
+    if (empty($data['confirm_password'])) {
+      $errors['confirm_password'] = "Please confirm your password.";
+    } elseif ($data['password'] !== $data['confirm_password']) {
+      $errors['confirm_password'] = "Passwords do not match.";
+    }
+
+    if (!empty($errors)) {
+      Session::start();
+      $_SESSION['errors'] = $errors;
+      header("Location: ../register.php", true, 303);
+      exit;
+    }
+
+    $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
+
+    $query = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+    $userId = $this->db->query($query, [$data['name'], $data['email'], $hashedPassword, 'user'], true);
+
+    Session::set("login", true);
+    Session::set("user_id", $userId);
+    Session::set("user_name", $data['name']);
+    Session::set("user_email", $data['email']);
+
+    header("Location: ../index.php", true, 303);
+    exit;
+  }
+
+  public function logout()
+  {
+    Session::destroy();
+    header("Location: ../login.php");
+    exit();
+  }
+}
