@@ -1,7 +1,7 @@
 <?php
 
-require_once '../database/database.php';
-require_once '../inc/session.php';
+require_once realpath(__DIR__) . '/../database/database.php';
+require_once realpath(__DIR__) . '/../inc/session.php';
 
 class Authentication
 {
@@ -51,10 +51,16 @@ class Authentication
       exit;
     }
 
+    $token = bin2hex(random_bytes(32));
+
+    $updateQuery = "UPDATE users SET token = ? WHERE id = ?";
+    $this->db->query($updateQuery, [$token, $user['id']]);
+
     Session::set("login", true);
     Session::set("user_id", $user['id']);
     Session::set("user_name", $user['name']);
     Session::set("user_email", $user['email']);
+    Session::set("token", $token);
 
     header("Location: ../index.php");
     exit;
@@ -99,13 +105,16 @@ class Authentication
 
     $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
 
-    $query = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
-    $userId = $this->db->query($query, [$data['name'], $data['email'], $hashedPassword, 'user'], true);
+    $token = bin2hex(random_bytes(32));
+
+    $query = "INSERT INTO users (name, email, password, role, token) VALUES (?, ?, ?, ?, ?)";
+    $userId = $this->db->query($query, [$data['name'], $data['email'], $hashedPassword, 'user', $token], true);
 
     Session::set("login", true);
     Session::set("user_id", $userId);
     Session::set("user_name", $data['name']);
     Session::set("user_email", $data['email']);
+    Session::set("token", $token);
 
     header("Location: ../index.php", true, 303);
     exit;
@@ -113,6 +122,14 @@ class Authentication
 
   public function logout()
   {
+    Session::start();
+    $userId = $_SESSION['user_id'] ?? null;
+
+    if ($userId) {
+      $query = "UPDATE users SET token = NULL WHERE id = ?";
+      $this->db->query($query, [$userId]);
+    }
+
     Session::destroy();
     header("Location: ../login.php");
     exit();

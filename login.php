@@ -1,5 +1,5 @@
 <?php
-require_once './layouts/header.php';
+require_once realpath(__DIR__) . '/layouts/header.php';
 Session::redirectIfLoggedIn();
 $errors = $_SESSION['errors'] ?? [];
 unset($_SESSION['errors']);
@@ -41,5 +41,5 @@ unset($_SESSION['errors']);
 
 
 <?php
-require_once './layouts/footer.php'
+require_once realpath(__DIR__) . '/layouts/footer.php'
 ?>

@@ -2,19 +2,21 @@
 
 class Database
 {
-    private $host = "localhost";  // Your database host
-    private $db_name = "events_management_system";  // Your database name
-    private $username = "root";  // Your database username
-    private $password = "mysql";  // Your database password
+    private $host = "localhost";
+    private $db_name = "events_management_system";
+    private $username = "root";
+    private $password = "mysql";
     private $conn;
 
     public function connect()
     {
-        try {
-            $this->conn = new PDO("mysql:host=$this->host;dbname=$this->db_name", $this->username, $this->password);
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            die("Database Connection Failed: " . $e->getMessage());
+        if (!$this->conn) {
+            try {
+                $this->conn = new PDO("mysql:host=$this->host;dbname=$this->db_name", $this->username, $this->password);
+                $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            } catch (PDOException $e) {
+                die("Database Connection Failed: " . $e->getMessage());
+            }
         }
         return $this->conn;
     }
