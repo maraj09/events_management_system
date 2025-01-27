@@ -24,4 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $authentication = new Authentication();
     $authentication->logout();
   }
+  if ($_GET['action'] === 'load-events') {
+    require_once realpath(__DIR__) . '/../classes/Event.php';
+    $event = new Event();
+    $event->index($_GET);
+  }
 }

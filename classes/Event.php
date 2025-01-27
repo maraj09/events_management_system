@@ -13,25 +13,33 @@ class Event
     $this->db = new Database();
   }
 
-  public function index()
+  public function index($data)
   {
-    // Pagination settings
-    $eventsPerPage = 10; // Number of events per page
-    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1; // Current page number, default to 1
+    Helper::validateUserToken();
 
-    // Calculate the offset for the SQL query
-    $offset = ($page - 1) * $eventsPerPage;
+    $page = $data['page'];
+    $perPage = $data['perPage'];
+    $offset = ($page - 1) * $perPage;
 
-    // Database connection and query to get events with pagination
-    $query = "SELECT * FROM events ORDER BY event_date DESC LIMIT $eventsPerPage OFFSET $offset";
-    $events = $this->db->query($query)->fetchAll(); // No need to pass parameters here
+    $sql = "SELECT * FROM events ORDER BY created_at DESC LIMIT $offset, $perPage";
+    $result = $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
-    // Get the total number of events for pagination
-    $totalEventsQuery = "SELECT COUNT(*) FROM events";
-    $totalEvents = $this->db->query($totalEventsQuery)->fetchColumn();
-    $totalPages = ceil($totalEvents / $eventsPerPage);
+    $totalEvents = $this->countTotalEvents();
 
-    return ['page' => $page, 'events' => $events, 'totalPages' => $totalPages];
+    echo json_encode([
+      'status' => 'success',
+      'data' => $result,
+      'totalEvents' => $totalEvents,
+      'perPage' => $perPage,
+      'currentPage' => $page,
+    ]);
+  }
+
+  public function countTotalEvents()
+  {
+    $sql = "SELECT COUNT(*) as total FROM events";
+    $result = $this->db->query($sql)->fetch(PDO::FETCH_ASSOC);
+    return $result['total'];
   }
 
   public function validateEvent($data, $file)
@@ -100,7 +108,9 @@ class Event
         $userId
       ], true);
 
-      echo json_encode(['status' => 'success', 'event_id' => $eventId]);
+      $event = $this->db->query("SELECT * FROM events WHERE id = $eventId")->fetch();
+
+      echo json_encode(['status' => 'success', 'event' => $event]);
     } catch (Exception $e) {
       throw new Exception("Failed to store event: " . $e->getMessage());
     }

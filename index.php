@@ -2,8 +2,6 @@
 require_once realpath(__DIR__) . '/layouts/header.php';
 require_once realpath(__DIR__) . '/classes/Event.php';
 Session::restrictAccess();
-$event = new Event();
-$data = $event->index();
 ?>
 
 <div id="alert-container" class="container py-4"></div>
@@ -19,30 +17,14 @@ $data = $event->index();
     </div>
   </div>
   <div class="container">
-    <div class="row">
-      <?php
-      foreach ($data['events'] as $event) { ?>
-        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-          <div class="card card-event h-100">
-            <img src="<?php echo $event['image'] ?  '.' . $event['image'] : './assets/images/event_placeholder.jpg' ?>" class="card-img-top" alt="Event Image">
-            <div class="card-body">
-              <h5 class="card-title"><?php echo $event['name'] ?></h5>
-              <p class="card-text"><?php echo substr($event['description'], 0, 100) . (strlen($event['description']) > 100 ? '...' : ''); ?></p>
+    <div class="row event-container">
 
-            </div>
-            <div class="card-footer text-muted">
-              <small>
-                Event Date:
-                <strong>
-                  <?php echo date('d-m-Y \a\t h:i A', strtotime($event['event_date'])); ?>
-                </strong>
-              </small>
-            </div>
-          </div>
-        </div>
-      <?php }
-      ?>
     </div>
+    <nav>
+      <ul class="pagination justify-content-center mt-4" id="pagination">
+
+      </ul>
+    </nav>
   </div>
 </div>
 

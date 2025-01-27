@@ -2,6 +2,57 @@
 // Create Event - Start
 //////////////////////////////////////
 
+let currentPage = 1;
+
+function loadEvents(page = 1, perPage = 8) {
+  $.ajax({
+    url: "./inc/router.php",
+    type: "GET",
+    data: { page: page, perPage: perPage, action: "load-events" },
+    success: function (response) {
+      response = JSON.parse(response);
+      if (response.status === "success") {
+        const events = response.data;
+        const totalEvents = response.totalEvents;
+        const perPage = response.perPage;
+        const totalPages = Math.ceil(totalEvents / perPage);
+
+        $(".event-container").empty();
+        events.forEach((event) => {
+          $(".event-container").append(generateEventCard(event));
+        });
+
+        generatePaginationLinks(totalPages, page);
+      }
+    },
+    error: function (error) {
+      console.log(error);
+    },
+  });
+}
+
+function generatePaginationLinks(totalPages, currentPage) {
+  const paginationContainer = $("#pagination");
+  paginationContainer.empty();
+
+  for (let i = 1; i <= totalPages; i++) {
+    const activeClass = i === currentPage ? "active" : "";
+    paginationContainer.append(`
+      <li class="page-item ${activeClass}">
+        <a class="page-link" href="#" data-page="${i}">${i}</a>
+      </li>
+    `);
+  }
+}
+
+$(document).on("click", "#pagination .page-link", function (e) {
+  e.preventDefault();
+  const page = $(this).data("page");
+  loadEvents(page);
+});
+
+loadEvents();
+
 $("#eventForm").on("submit", function (e) {
   e.preventDefault();
 
@@ -61,6 +112,8 @@ $("#eventForm").on("submit", function (e) {
           $("#eventForm")[0].reset();
           $(".form-control").removeClass("is-invalid");
           showAlert("success", "Event created successfully!");
+          currentPage = 1;
+          loadEvents(currentPage);
         } else {
           var errors = response.errors;
           $.each(errors, function (field, message) {
@@ -79,6 +132,40 @@ $("#eventForm").on("submit", function (e) {
   }
 });
 
+function generateEventCard(event) {
+  return `
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+      <div class="card card-event h-100">
+        <img src="${
+          event.image
+            ? "." + event.image
+            : "./assets/images/event_placeholder.jpg"
+        }" class="card-img-top" alt="Event Image">
+        <div class="card-body">
+          <h5 class="card-title">${event.name}</h5>
+          <p class="card-text">${event.description.substring(0, 100)}${
+    event.description.length > 100 ? "..." : ""
+  }</p>
+          <small>
+            Event Date:
+            <strong>${moment(event.event_date).format(
+              "DD-MM-YYYY [at] hh:mm A"
+            )}</strong>
+          </small>
+        </div>
+        <div class="card-footer d-flex">
+          <button class="btn btn-sm btn-warning edit-event ms-auto" data-id="${
+            event.id
+          }" data-bs-toggle="modal" data-bs-target="#eventModal">Edit</button>
+          <button class="btn btn-sm btn-outline-danger delete-event ms-2" data-id="${
+            event.id
+          }">Delete</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 //////////////////////////////////////
 // Create Event - End
 //////////////////////////////////////
@@ -87,7 +174,6 @@ $("#eventForm").on("submit", function (e) {
 // Bootstrap Alert - Start
 //////////////////////////////////////
 function showAlert(type, message) {
-  // Create a Bootstrap alert element
   var alert = $(
     '<div class="alert alert-' +
       type +
