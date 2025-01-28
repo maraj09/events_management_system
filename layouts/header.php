@@ -24,15 +24,11 @@ include realpath(__DIR__) . '/../inc/session.php';
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mb-2 mb-lg-0 w-100">
-            <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="events.php">All Events</a>
-            </li>
             <li class="nav-item dropdown ms-lg-auto">
               <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <?php echo Session::get('user_name') ?>
               </a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">My Events</a></li>
                 <li>
                   <hr class="dropdown-divider">
                 </li>

@@ -1,14 +1,22 @@
 //////////////////////////////////////
-// Create Event - Start
+// Event - Start
 //////////////////////////////////////
 
 let currentPage = 1;
 
 function loadEvents(page = 1, perPage = 8) {
+  const eventFilterValue = $("#eventFilter").val();
+  const eventSearch = $("#eventSearch").val();
   $.ajax({
     url: "./inc/router.php",
     type: "GET",
-    data: { page: page, perPage: perPage, action: "load-events" },
+    data: {
+      page: page,
+      perPage: perPage,
+      action: "load-events",
+      filter: eventFilterValue,
+      search: eventSearch
+    },
     success: function (response) {
       response = JSON.parse(response);
       if (response.status === "success") {
@@ -31,6 +39,14 @@ function loadEvents(page = 1, perPage = 8) {
   });
 }
 
+$(document).on("change", "#eventFilter", function () {
+  loadEvents();
+});
+
+$(document).on("keyup", "#eventSearch", function () {
+  loadEvents();
+});
+
 function generatePaginationLinks(totalPages, currentPage) {
   const paginationContainer = $("#pagination");
   paginationContainer.empty();
@@ -48,10 +64,20 @@ function generatePaginationLinks(totalPages, currentPage) {
 $(document).on("click", "#pagination .page-link", function (e) {
   e.preventDefault();
   const page = $(this).data("page");
+  currentPage = page;
   loadEvents(page);
 });
 
 loadEvents();
+
+$("#new-event").on("click", function () {
+  $("#eventForm")[0].reset();
+  $(".form-control").removeClass("is-invalid");
+  $("#eventModal").find("[data-id]").removeAttr("data-id");
+
+  $("#eventForm [name='action']").val("add-event");
+  $("#eventModal [type='submit']").text("Create Event");
+});
 
 $("#eventForm").on("submit", function (e) {
   e.preventDefault();
@@ -97,10 +123,16 @@ $("#eventForm").on("submit", function (e) {
     isValid = false;
   }
 
+  const eventId = $(this).attr("data-id");
+
+  const actionUrl = eventId
+    ? `./inc/router.php?id=${eventId}`
+    : $(this).attr("action");
+
   if (isValid) {
     const formData = new FormData(this);
     $.ajax({
-      url: $(this).attr("action"),
+      url: actionUrl,
       type: $(this).attr("method"),
       data: formData,
       processData: false,
@@ -111,9 +143,14 @@ $("#eventForm").on("submit", function (e) {
           $("#eventModal").modal("hide");
           $("#eventForm")[0].reset();
           $(".form-control").removeClass("is-invalid");
-          showAlert("success", "Event created successfully!");
-          currentPage = 1;
-          loadEvents(currentPage);
+          if (eventId) {
+            showAlert("success", "Event updated successfully!");
+            loadEvents(currentPage);
+          } else {
+            showAlert("success", "Event created successfully!");
+            currentPage = 1;
+            loadEvents(currentPage);
+          }
         } else {
           var errors = response.errors;
           $.each(errors, function (field, message) {
@@ -130,6 +167,35 @@ $("#eventForm").on("submit", function (e) {
       },
     });
   }
+});
+
+$(document).on("click", ".edit-event", function () {
+  const eventId = $(this).data("id");
+
+  $.ajax({
+    url: `./inc/router.php`,
+    type: "GET",
+    data: { id: eventId, action: "edit-event" },
+    success: function (response) {
+      response = JSON.parse(response);
+
+      if (response.status === "success") {
+        $("#eventForm").attr("data-id", eventId);
+        $("#eventForm [name='name']").val(response.event.name);
+        $("#eventForm [name='action']").val("update-event");
+        $("#eventForm [name='description']").val(response.event.description);
+        $("#eventForm [name='event_date']").val(response.event.event_date);
+        $("#eventForm [name='user_limit']").val(response.event.user_limit);
+        $("#eventModal [type='submit']").text("Update Event");
+      } else {
+        showAlert("danger", "Failed to fetch event details!");
+      }
+    },
+    error: function (error) {
+      console.log(error);
+      showAlert("danger", "An error occurred while fetching event details!");
+    },
+  });
 });
 
 function generateEventCard(event) {
@@ -153,21 +219,53 @@ function generateEventCard(event) {
             )}</strong>
           </small>
         </div>
-        <div class="card-footer d-flex">
-          <button class="btn btn-sm btn-warning edit-event ms-auto" data-id="${
-            event.id
-          }" data-bs-toggle="modal" data-bs-target="#eventModal">Edit</button>
-          <button class="btn btn-sm btn-outline-danger delete-event ms-2" data-id="${
-            event.id
-          }">Delete</button>
-        </div>
+        ${
+          sessionUserId === event.user_id
+            ? `<div class="card-footer d-flex">
+            <small>
+            Total Seat:
+            <strong>${event.user_limit}</strong>
+          </small>
+          <button class="btn btn-sm btn-warning edit-event ms-auto" data-id="${event.id}" data-bs-toggle="modal" data-bs-target="#eventModal">Edit</button>
+          <button class="btn btn-sm btn-outline-danger delete-event ms-2" data-id="${event.id}">Delete</button>
+        </div>`
+            : ""
+        }
+        
       </div>
     </div>
   `;
 }
 
+$(document).on("click", ".delete-event", function (e) {
+  e.preventDefault();
+  const eventId = $(this).data("id");
+
+  $.ajax({
+    url: "./inc/router.php",
+    type: "POST",
+    data: {
+      action: "delete-event",
+      id: eventId,
+    },
+    success: function (response) {
+      response = JSON.parse(response);
+      if (response.status === "success") {
+        showAlert("success", "Event deleted successfully!");
+        loadEvents(currentPage);
+      } else {
+        showAlert("error", response.message);
+      }
+    },
+    error: function (error) {
+      console.log(error);
+      showAlert("error", "Something went wrong!");
+    },
+  });
+});
+
 //////////////////////////////////////
-// Create Event - End
+// Event - End
 //////////////////////////////////////
 
 //////////////////////////////////////

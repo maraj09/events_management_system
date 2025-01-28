@@ -11,10 +11,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once realpath(__DIR__) . '/../classes/Authentication.php';
     $authentication = new Authentication();
     $authentication->login($_POST);
-  } else if ($action === 'add_event') {
+  } else if ($action === 'add-event') {
     require_once realpath(__DIR__) . '/../classes/Event.php';
     $event = new Event();
     $event->store($_POST, $_FILES);
+  } else if ($action === 'update-event') {
+    require_once realpath(__DIR__) . '/../classes/Event.php';
+    $event = new Event();
+    $event->update($_GET['id'], $_POST, $_FILES);
+  } else if ($action === 'delete-event') {
+    require_once realpath(__DIR__) . '/../classes/Event.php';
+    $event = new Event();
+    $event->delete($_POST);
   }
 }
 
@@ -23,10 +31,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     require_once realpath(__DIR__) . '/../classes/Authentication.php';
     $authentication = new Authentication();
     $authentication->logout();
-  }
-  if ($_GET['action'] === 'load-events') {
+  } else if ($_GET['action'] === 'load-events') {
     require_once realpath(__DIR__) . '/../classes/Event.php';
     $event = new Event();
     $event->index($_GET);
+  } else if ($_GET['action'] === 'edit-event') {
+    require_once realpath(__DIR__) . '/../classes/Event.php';
+    $event = new Event();
+    $event->edit($_GET);
   }
 }

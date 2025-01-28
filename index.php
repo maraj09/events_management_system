@@ -8,12 +8,20 @@ Session::restrictAccess();
 
 <div class="container">
   <div class="d-flex align-items-center mb-4">
-    <h3>My Events</h3>
+    <h3>Events</h3>
     <div class="ms-auto col-3">
-      <input type="text" class="form-control bg-light" placeholder="Search">
+      <input type="text" class="form-control bg-light" id="eventSearch" placeholder="Search">
     </div>
     <div class="ms-3">
-      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#eventModal">+ New Event</button>
+      <select id="eventFilter" class="form-select">
+        <option value="created_at" selected>Created At</option>
+        <option value="event_date">Event Date</option>
+        <option value="name">Name</option>
+        <option value="only_mine">Only Mine</option>
+      </select>
+    </div>
+    <div class="ms-3">
+      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#eventModal" id="new-event">+ New Event</button>
     </div>
   </div>
   <div class="container">
@@ -37,8 +45,8 @@ Session::restrictAccess();
       </div>
       <div class="modal-body">
         <form id="eventForm" method="POST" action="./inc/router.php" enctype="multipart/form-data">
-          <input type="hidden" name="action" value="add_event">
-          <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']; ?>">
+          <input type="hidden" name="action" value="add-event">
+          <input type="hidden" name="csrf_token" value="<?= Session::get('csrf_token'); ?>">
           <div class="mb-3">
             <label for="eventName" class="form-label">Event Name</label>
             <input type="text" class="form-control" id="eventName" name="name">

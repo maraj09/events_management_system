@@ -20,20 +20,54 @@ class Event
     $page = $data['page'];
     $perPage = $data['perPage'];
     $offset = ($page - 1) * $perPage;
+    $filter = $data['filter'] ?? 'created_at';
+    $search = $data['search'] ?? '';  
+    $userId = $_SESSION['user_id'] ?? null;
 
-    $sql = "SELECT * FROM events ORDER BY created_at DESC LIMIT $offset, $perPage";
-    $result = $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    
+    $sql = "SELECT * FROM events";
 
-    $totalEvents = $this->countTotalEvents();
+    if ($filter === 'only_mine' && $userId) {
+      $sql .= " WHERE user_id = $userId";
+    }
 
-    echo json_encode([
-      'status' => 'success',
-      'data' => $result,
-      'totalEvents' => $totalEvents,
-      'perPage' => $perPage,
-      'currentPage' => $page,
-    ]);
+    if (!empty($search)) {
+      if (strpos($sql, 'WHERE') !== false) {
+        $sql .= " AND (name LIKE '%$search%' OR description LIKE '%$search%' OR event_date LIKE '%$search%')";
+      } else {
+        $sql .= " WHERE (name LIKE '%$search%' OR description LIKE '%$search%' OR event_date LIKE '%$search%')";
+      }
+    }
+
+    if ($filter === 'created_at') {
+      $sql .= " ORDER BY created_at DESC";
+    } elseif ($filter === 'event_date') {
+      $sql .= " ORDER BY event_date DESC";
+    } elseif ($filter === 'name') {
+      $sql .= " ORDER BY name ASC";  
+    }
+
+    $sql .= " LIMIT $perPage OFFSET $offset";
+
+    try {
+      $result = $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+      $totalEvents = $this->countTotalEvents();
+
+      echo json_encode([
+        'status' => 'success',
+        'data' => $result,
+        'totalEvents' => $totalEvents,
+        'perPage' => $perPage,
+        'currentPage' => $page,
+      ]);
+    } catch (PDOException $e) {
+      echo json_encode([
+        'status' => 'error',
+        'message' => $e->getMessage(),
+      ]);
+    }
   }
+
 
   public function countTotalEvents()
   {
@@ -99,7 +133,7 @@ class Event
     $query = "INSERT INTO events (name, description, image, event_date, `user_limit`, user_id) VALUES (?, ?, ?, ?, ?, ?)";
 
     try {
-      $eventId = $this->db->query($query, [
+      $this->db->query($query, [
         $data['name'],
         $data['description'],
         $imagePath,
@@ -108,11 +142,74 @@ class Event
         $userId
       ], true);
 
-      $event = $this->db->query("SELECT * FROM events WHERE id = $eventId")->fetch();
-
-      echo json_encode(['status' => 'success', 'event' => $event]);
+      echo json_encode(['status' => 'success']);
     } catch (Exception $e) {
       throw new Exception("Failed to store event: " . $e->getMessage());
+    }
+  }
+
+  public function edit($data)
+  {
+    $eventId = $data['id'];
+    $event = $this->db->query("SELECT * FROM events WHERE id = $eventId")->fetch();
+
+    if ($event) {
+      echo json_encode(['status' => 'success', 'event' => $event]);
+    } else {
+      echo json_encode(['status' => 'error', 'message' => 'Event not found!']);
+    }
+  }
+
+  public function update($eventId, $data, $file)
+  {
+    $validationErrors = $this->validateEvent($data, $file);
+
+    if (!empty($validationErrors)) {
+      echo json_encode(['status' => 'error', 'errors' => $validationErrors]);
+      exit;
+    }
+
+    $existingEvent = $this->db->query("SELECT * FROM events WHERE id = ?", [$eventId])->fetch();
+    if (!$existingEvent) {
+      echo json_encode(['status' => 'error', 'message' => 'Event not found']);
+      exit;
+    }
+
+    $userId = $_SESSION['user_id'] ?? null;
+
+    if ($existingEvent['user_id'] != $userId) {
+      echo json_encode(['status' => 'error', 'message' => 'You cant modify other\'s event!']);
+      exit;
+    }
+
+    $imagePath = $existingEvent['image'];
+    if (!empty($file['image']) && $file['image']['error'] === UPLOAD_ERR_OK) {
+      if ($imagePath && file_exists(realpath(__DIR__) . '/..' . $imagePath)) {
+        unlink(realpath(__DIR__) . '/..' . $imagePath);
+      }
+
+      $imagePath = $this->handleImageUpload($file['image']);
+    }
+
+
+    $query = "UPDATE events 
+              SET name = ?, description = ?, image = ?, event_date = ?, `user_limit` = ?
+              WHERE id = ? AND user_id = ?";
+
+    try {
+      $this->db->query($query, [
+        $data['name'],
+        $data['description'],
+        $imagePath,
+        $data['event_date'],
+        $data['user_limit'],
+        $eventId,
+        $userId
+      ]);
+
+      echo json_encode(['status' => 'success']);
+    } catch (Exception $e) {
+      throw new Exception("Failed to update event: " . $e->getMessage());
     }
   }
 
@@ -135,5 +232,28 @@ class Event
     }
 
     return '/uploads/events/' . $imageName;
+  }
+
+  public function delete($data)
+  {
+    $eventId = $data['id'];
+    Helper::validateUserToken();
+    $userId = $_SESSION['user_id'] ?? null;
+
+    $existingEvent = $this->db->query("SELECT * FROM events WHERE id = ?", [$eventId])->fetch();
+    if ($existingEvent['user_id'] != $userId) {
+      echo json_encode(['status' => 'error', 'message' => 'You cant modify other\'s event!']);
+      exit;
+    }
+
+    $imagePath = $existingEvent['image'];
+    if ($imagePath && file_exists(realpath(__DIR__) . '/..' . $imagePath)) {
+      unlink(realpath(__DIR__) . '/..' . $imagePath);
+    }
+
+    $query = "DELETE FROM events WHERE id = ?";
+    $this->db->query($query, [$eventId]);
+
+    echo json_encode(['status' => 'success']);
   }
 }
