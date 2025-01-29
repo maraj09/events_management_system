@@ -23,6 +23,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once realpath(__DIR__) . '/../classes/Event.php';
     $event = new Event();
     $event->delete($_POST);
+  } else if ($action === 'book-event') {
+    require_once realpath(__DIR__) . '/../classes/EventBooking.php';
+    $event = new EventBooking();
+    $event->book($_POST);
   }
 }
 

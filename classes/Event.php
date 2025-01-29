@@ -21,10 +21,10 @@ class Event
     $perPage = $data['perPage'];
     $offset = ($page - 1) * $perPage;
     $filter = $data['filter'] ?? 'created_at';
-    $search = $data['search'] ?? '';  
+    $search = $data['search'] ?? '';
     $userId = $_SESSION['user_id'] ?? null;
 
-    
+
     $sql = "SELECT * FROM events";
 
     if ($filter === 'only_mine' && $userId) {
@@ -44,7 +44,7 @@ class Event
     } elseif ($filter === 'event_date') {
       $sql .= " ORDER BY event_date DESC";
     } elseif ($filter === 'name') {
-      $sql .= " ORDER BY name ASC";  
+      $sql .= " ORDER BY name ASC";
     }
 
     $sql .= " LIMIT $perPage OFFSET $offset";
@@ -148,8 +148,28 @@ class Event
     }
   }
 
+  public function show($id)
+  {
+    Helper::validateUserToken();
+
+    $event = $this->db->query("SELECT * FROM events WHERE id = $id")->fetch();
+    $totalLimit = $event['user_limit'];
+
+    $totalBooked = $this->db->query("SELECT SUM(quantity) as total FROM event_bookings WHERE event_id = ?", [$event['id']])->fetch();
+    $totalBooked = $totalBooked['total'] ?? 0;
+
+    $availableSeat = $totalLimit - $totalBooked;
+
+    return ['event' => $event, 'availableSeat' => $availableSeat];
+  }
+
+
+
   public function edit($data)
   {
+
+    Helper::validateUserToken();
+
     $eventId = $data['id'];
     $event = $this->db->query("SELECT * FROM events WHERE id = $eventId")->fetch();
 

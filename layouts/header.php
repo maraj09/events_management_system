@@ -29,9 +29,6 @@ include realpath(__DIR__) . '/../inc/session.php';
                 <?php echo Session::get('user_name') ?>
               </a>
               <ul class="dropdown-menu">
-                <li>
-                  <hr class="dropdown-divider">
-                </li>
                 <li><a class="dropdown-item text-danger" href="./inc/router.php?action=logout">Logout</a></li>
               </ul>
             </li>

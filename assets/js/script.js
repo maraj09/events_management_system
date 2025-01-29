@@ -15,7 +15,7 @@ function loadEvents(page = 1, perPage = 8) {
       perPage: perPage,
       action: "load-events",
       filter: eventFilterValue,
-      search: eventSearch
+      search: eventSearch,
     },
     success: function (response) {
       response = JSON.parse(response);
@@ -208,7 +208,11 @@ function generateEventCard(event) {
             : "./assets/images/event_placeholder.jpg"
         }" class="card-img-top" alt="Event Image">
         <div class="card-body">
-          <h5 class="card-title">${event.name}</h5>
+          <a href="event.php?id=${
+            event.id
+          }" class="text-decoration-none"><h5 class="card-title">${
+    event.name
+  }</h5></a>
           <p class="card-text">${event.description.substring(0, 100)}${
     event.description.length > 100 ? "..." : ""
   }</p>
@@ -287,4 +291,47 @@ function showAlert(type, message) {
 
 //////////////////////////////////////
 // Bootstrap Alert - End
+//////////////////////////////////////
+
+//////////////////////////////////////
+// Event Booking - Start
+//////////////////////////////////////
+
+$("#bookingForm").on("submit", function (e) {
+  e.preventDefault();
+
+  let quantity = $("#quantity").val();
+  if (quantity < 1) {
+    $("#quantity").addClass("is-invalid");
+    return;
+  }
+
+  const formData = new FormData(this);
+  console.log(formData);
+  $.ajax({
+    url: "./inc/router.php",
+    type: "POST",
+    data: formData,
+    processData: false, 
+    contentType: false,
+    success: function (response) {
+      response = JSON.parse(response);
+      $("#bookingModal").modal("hide");
+      $("#bookingForm")[0].reset();
+      $("#quantity").removeClass("is-invalid");
+      if (response.status === "success") {
+        $("#availableSeatCount").text(response.availableSeat);
+        showAlert("success", "Booking Successful!");
+      } else {
+        showAlert("danger", response.message);
+      }
+    },
+    error: function () {
+      alert("Something went wrong! Please try again.");
+    },
+  });
+});
+
+//////////////////////////////////////
+// Event Booking - End
 //////////////////////////////////////

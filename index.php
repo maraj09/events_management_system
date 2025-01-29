@@ -1,18 +1,17 @@
 <?php
 require_once realpath(__DIR__) . '/layouts/header.php';
-require_once realpath(__DIR__) . '/classes/Event.php';
 Session::restrictAccess();
 ?>
 
 <div id="alert-container" class="container py-4"></div>
 
 <div class="container">
-  <div class="d-flex align-items-center mb-4">
-    <h3>Events</h3>
-    <div class="ms-auto col-3">
+  <div class="d-flex align-items-center mb-4 flex-wrap">
+    <h3 class="col-12 col-md-5">Events</h3>
+    <div class="mt-3 mt-md-0 ms-md-auto col-3">
       <input type="text" class="form-control bg-light" id="eventSearch" placeholder="Search">
     </div>
-    <div class="ms-3">
+    <div class="mt-3 mt-md-0 ms-3">
       <select id="eventFilter" class="form-select">
         <option value="created_at" selected>Created At</option>
         <option value="event_date">Event Date</option>
@@ -20,7 +19,7 @@ Session::restrictAccess();
         <option value="only_mine">Only Mine</option>
       </select>
     </div>
-    <div class="ms-3">
+    <div class="mt-3 mt-md-0 ms-3">
       <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#eventModal" id="new-event">+ New Event</button>
     </div>
   </div>
