@@ -25,8 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $event->delete($_POST);
   } else if ($action === 'book-event') {
     require_once realpath(__DIR__) . '/../classes/EventBooking.php';
-    $event = new EventBooking();
-    $event->book($_POST);
+    $eventBooking = new EventBooking();
+    $eventBooking->book($_POST);
   }
 }
 
@@ -43,5 +43,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     require_once realpath(__DIR__) . '/../classes/Event.php';
     $event = new Event();
     $event->edit($_GET);
+  } else if ($_GET['action'] === 'generate-event-report') {
+    require_once realpath(__DIR__) . '/../classes/EventBooking.php';
+    $eventBooking = new EventBooking();
+    $eventBooking->generateEventReport($_GET);
+  } else if ($_GET['action'] === 'get-event-details') {
+    require_once realpath(__DIR__) . '/../classes/Event.php';
+    $eventBooking = new Event();
+    $eventBooking->show($_GET['id']);
   }
 }

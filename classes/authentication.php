@@ -19,7 +19,7 @@ class Authentication
     return $stmt->fetchColumn() > 0; // Return true if email exists
   }
 
-  public function login($data)
+  public function login($data, $apiLogin = false)
   {
     $errors = [];
 
@@ -46,6 +46,10 @@ class Authentication
 
     if (!$user || !password_verify($data['password'], $user['password'])) {
       Session::start();
+      if ($apiLogin) {
+        echo json_encode(['status' => 'success', 'email' => "Invalid email or password."]);
+        exit;
+      }
       $_SESSION['errors'] = ['email' => "Invalid email or password."];
       header("Location: ../login.php");
       exit;
@@ -55,6 +59,11 @@ class Authentication
 
     $updateQuery = "UPDATE users SET token = ? WHERE id = ?";
     $this->db->query($updateQuery, [$token, $user['id']]);
+
+    if ($apiLogin) {
+      echo json_encode(['status' => 'success', 'token' => $token]);
+      exit;
+    }
 
     Session::set("login", true);
     Session::set("user_id", $user['id']);

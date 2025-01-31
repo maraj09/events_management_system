@@ -27,6 +27,12 @@ $event = $data['event'];
               Book Now!
             </button>
             <span class="text-danger ms-3">Available Seats: <strong id="availableSeatCount"><?= $data['availableSeat'] ?></strong></span>
+            <br>
+            <?php if ($data['userRole'] == 'admin') { ?>
+              <a href="./inc/router.php?id=<?= $event['id'] ?>&action=generate-event-report">
+                <button class="btn btn-outline-primary btn-lg mt-5 w-100">Download Report</button>
+              </a>
+            <?php }  ?>
           </div>
         </div>
       </div>

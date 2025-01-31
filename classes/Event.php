@@ -152,6 +152,11 @@ class Event
   {
     Helper::validateUserToken();
 
+    $userId = $_SESSION['user_id'] ?? null;
+
+    $query = "SELECT role FROM users WHERE id = ?";
+    $userRole = $this->db->query($query, [$userId])->fetchColumn();
+
     $event = $this->db->query("SELECT * FROM events WHERE id = $id")->fetch();
     $totalLimit = $event['user_limit'];
 
@@ -160,7 +165,7 @@ class Event
 
     $availableSeat = $totalLimit - $totalBooked;
 
-    return ['event' => $event, 'availableSeat' => $availableSeat];
+    return ['event' => $event, 'availableSeat' => $availableSeat, 'userRole' => $userRole];
   }
 
 
@@ -275,5 +280,27 @@ class Event
     $this->db->query($query, [$eventId]);
 
     echo json_encode(['status' => 'success']);
+  }
+
+  public function showEventApi($id, $token)
+  {
+    header('Content-Type: application/json');
+
+    $user = $this->db->query("SELECT id FROM users WHERE token = ?", [$token])->fetch();
+
+    if (!$user) {
+      echo json_encode(['status' => 'error', 'message' => 'Invalid token']);
+      return;
+    }
+
+    $event = $this->db->query("SELECT * FROM events WHERE id = $id")->fetch(PDO::FETCH_ASSOC);
+    $totalLimit = $event['user_limit'];
+
+    $totalBooked = $this->db->query("SELECT SUM(quantity) as total FROM event_bookings WHERE event_id = ?", [$event['id']])->fetch();
+    $totalBooked = $totalBooked['total'] ?? 0;
+
+    $availableSeat = $totalLimit - $totalBooked;
+
+    echo json_encode(['status' => 'success', 'event' => $event, 'availableSeat' => $availableSeat]);
   }
 }

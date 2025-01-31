@@ -223,19 +223,19 @@ function generateEventCard(event) {
             )}</strong>
           </small>
         </div>
-        ${
-          sessionUserId === event.user_id
-            ? `<div class="card-footer d-flex">
-            <small>
+        <small>
+        <div class="card-footer d-flex">
             Total Seat:
             <strong>${event.user_limit}</strong>
           </small>
+          ${
+            sessionUserId === event.user_id
+              ? `
           <button class="btn btn-sm btn-warning edit-event ms-auto" data-id="${event.id}" data-bs-toggle="modal" data-bs-target="#eventModal">Edit</button>
-          <button class="btn btn-sm btn-outline-danger delete-event ms-2" data-id="${event.id}">Delete</button>
-        </div>`
-            : ""
-        }
-        
+          <button class="btn btn-sm btn-outline-danger delete-event ms-2" data-id="${event.id}">Delete</button>`
+              : ""
+          }
+        </div>
       </div>
     </div>
   `;
@@ -312,7 +312,7 @@ $("#bookingForm").on("submit", function (e) {
     url: "./inc/router.php",
     type: "POST",
     data: formData,
-    processData: false, 
+    processData: false,
     contentType: false,
     success: function (response) {
       response = JSON.parse(response);

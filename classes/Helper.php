@@ -28,7 +28,8 @@ class Helper
     $storedToken = $db->query($query, [$userId])->fetchColumn();
 
     if ($storedToken !== $userToken) {
-      throw new Exception("Invalid session token. Please log in again.");
+      Session::destroy();
+      header("Location: login.php");
     }
     return true;
   }

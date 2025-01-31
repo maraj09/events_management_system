@@ -55,4 +55,44 @@ class EventBooking
       echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
     }
   }
+
+  public function generateEventReport($data)
+  {
+    Helper::validateUserToken();
+
+    $userId = $_SESSION['user_id'] ?? null;
+
+    $query = "SELECT role FROM users WHERE id = ?";
+    $userRole = $this->db->query($query, [$userId])->fetchColumn();
+
+    if ($userRole !== 'admin') {
+      throw new Exception("User not admin.");
+    }
+
+    $eventId = $data['id'];
+    $fileName = "event_report_" . $eventId . ".csv";
+
+    $sql = "SELECT users.id AS user_id, users.name, users.email, SUM(event_bookings.quantity) AS total_quantity
+            FROM event_bookings
+            JOIN users ON event_bookings.user_id = users.id
+            WHERE event_bookings.event_id = ?
+            GROUP BY event_bookings.user_id";
+
+    $stmt = $this->db->query($sql, [$eventId]);
+    $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    header("Content-Type: text/csv");
+    header("Content-Disposition: attachment; filename=\"$fileName\"");
+
+    $output = fopen('php://output', 'w');
+
+    fputcsv($output, ['User ID', 'Name', 'Email', 'Total Quantity']);
+
+    foreach ($bookings as $row) {
+      fputcsv($output, $row);
+    }
+
+    fclose($output);
+    exit;
+  }
 }
