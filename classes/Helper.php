@@ -33,4 +33,30 @@ class Helper
     }
     return true;
   }
+
+  public static function validateBearerToken()
+  {
+    $headers = apache_request_headers();
+    $token = null;
+
+    if (isset($headers['Authorization'])) {
+      $tokenParts = explode(' ', $headers['Authorization']);
+      if (count($tokenParts) === 2 && $tokenParts[0] === 'Bearer') {
+        $token = $tokenParts[1];
+      }
+    }
+
+    if (!$token) {
+      echo json_encode(['status' => 'error', 'message' => 'Missing token']);
+      exit;
+    }
+
+    $db = new Database();
+    $user = $db->query("SELECT id FROM users WHERE token = ?", [$token])->fetch();
+
+    if (!$user) {
+      echo json_encode(['status' => 'error', 'message' => 'Invalid token']);
+      exit;
+    }
+  }
 }

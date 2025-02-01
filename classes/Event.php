@@ -202,7 +202,7 @@ class Event
 
     $userId = $_SESSION['user_id'] ?? null;
 
-    if ($existingEvent['user_id'] != $userId) {
+    if ($existingEvent['user_id'] != $userId && Session::get('user_role') == 'user') {
       echo json_encode(['status' => 'error', 'message' => 'You cant modify other\'s event!']);
       exit;
     }
@@ -216,10 +216,9 @@ class Event
       $imagePath = $this->handleImageUpload($file['image']);
     }
 
-
     $query = "UPDATE events 
               SET name = ?, description = ?, image = ?, event_date = ?, `user_limit` = ?
-              WHERE id = ? AND user_id = ?";
+              WHERE id = ?";
 
     try {
       $this->db->query($query, [
@@ -229,7 +228,6 @@ class Event
         $data['event_date'],
         $data['user_limit'],
         $eventId,
-        $userId
       ]);
 
       echo json_encode(['status' => 'success']);
@@ -266,7 +264,7 @@ class Event
     $userId = $_SESSION['user_id'] ?? null;
 
     $existingEvent = $this->db->query("SELECT * FROM events WHERE id = ?", [$eventId])->fetch();
-    if ($existingEvent['user_id'] != $userId) {
+    if ($existingEvent['user_id'] != $userId && Session::get('user_role') == 'user') {
       echo json_encode(['status' => 'error', 'message' => 'You cant modify other\'s event!']);
       exit;
     }
@@ -282,16 +280,11 @@ class Event
     echo json_encode(['status' => 'success']);
   }
 
-  public function showEventApi($id, $token)
+  public function showEventApi($id)
   {
     header('Content-Type: application/json');
 
-    $user = $this->db->query("SELECT id FROM users WHERE token = ?", [$token])->fetch();
-
-    if (!$user) {
-      echo json_encode(['status' => 'error', 'message' => 'Invalid token']);
-      return;
-    }
+    Helper::validateBearerToken();
 
     $event = $this->db->query("SELECT * FROM events WHERE id = $id")->fetch(PDO::FETCH_ASSOC);
     $totalLimit = $event['user_limit'];

@@ -228,18 +228,17 @@ function generateEventCard(event) {
             Total Seat:
             <strong>${event.user_limit}</strong>
           </small>
-          ${
-            sessionUserId === event.user_id
-              ? `
-          <button class="btn btn-sm btn-warning edit-event ms-auto" data-id="${event.id}" data-bs-toggle="modal" data-bs-target="#eventModal">Edit</button>
-          <button class="btn btn-sm btn-outline-danger delete-event ms-2" data-id="${event.id}">Delete</button>`
-              : ""
-          }
+          ${ (sessionUserId === event.user_id || userRole === 'admin') ? `
+            <button class="btn btn-sm btn-warning edit-event ms-auto" data-id="${event.id}" data-bs-toggle="modal" data-bs-target="#eventModal">Edit</button>
+            <button class="btn btn-sm btn-outline-danger delete-event ms-2" data-id="${event.id}">Delete</button>
+          ` : '' }
         </div>
       </div>
     </div>
   `;
 }
+
+console.log(userRole);
 
 $(document).on("click", ".delete-event", function (e) {
   e.preventDefault();

@@ -13,6 +13,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   if ($_GET['action'] === 'api-event-details') {
     require_once realpath(__DIR__) . '/../classes/Event.php';
     $event = new Event();
-    $event->showEventApi($_GET['id'], $_GET['token']);
+    $event->showEventApi($_GET['id']);
   }
 }

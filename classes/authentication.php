@@ -40,7 +40,7 @@ class Authentication
       exit;
     }
 
-    $query = "SELECT id, name, email, password FROM users WHERE email = ?";
+    $query = "SELECT * FROM users WHERE email = ?";
     $result = $this->db->query($query, [$data['email']]);
     $user = $result->fetch(PDO::FETCH_ASSOC);
 
@@ -69,6 +69,7 @@ class Authentication
     Session::set("user_id", $user['id']);
     Session::set("user_name", $user['name']);
     Session::set("user_email", $user['email']);
+    Session::set("user_role", $user['role']);
     Session::set("token", $token);
 
     header("Location: ../index.php");
