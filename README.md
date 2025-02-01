@@ -47,7 +47,7 @@ Open your web browser and navigate to the local server URL, such as **http://loc
 
 After logging in, you will be directed to the dashboard, where all events are displayed with pagination. You can easily filter events by using the search or sort functions. To create a new event, simply click on the **"New Event"** button.
 
-![alt text](https://github.com/maraj09/events_management_system/tree/main/assets/images/screenshots/dashboard.png)
+![Event Dashboard](assets/images/screenshots/dashboard.png)
 
 
 
